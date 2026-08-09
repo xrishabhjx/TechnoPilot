@@ -129,16 +129,16 @@ export default function App() {
           <Text style={styles.cardTextSmall}>Inspect the bearing housing and confirm the temperature trend before restarting the pump.</Text>
         </View>
 
-        <View style={styles.actionsRow}>
-          <TouchableOpacity accessibilityLabel="Start or advance session" style={styles.bigButton} onPress={advance} activeOpacity={0.9}>
-            <Text style={styles.bigButtonText}>{phase === 'idle' ? 'Start session' : phase === 'complete' ? 'Restart' : 'Next'}</Text>
+        <View style={styles.actionsRowSmall}>
+          <TouchableOpacity accessibilityLabel="Toggle mic recording" style={styles.primaryButton} onPress={toggleRecording} activeOpacity={0.9}>
+            <Text style={styles.primaryButtonText}>{isRecording ? 'Stop mic' : 'Start mic'}</Text>
           </TouchableOpacity>
           <TouchableOpacity accessibilityLabel="Reset session" style={styles.smallButton} onPress={() => { reset(); setImageUri(null); setIsRecording(false); }}>
             <Text style={styles.smallButtonText}>Reset</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.helperText}>Start mic records technician input; use Next to advance the assistant response.</Text>
+        <Text style={styles.helperText}>Mic controls the session: tap to start recording, tap again to stop and send input.</Text>
 
         <View style={{ height: 80 }} />
       </ScrollView>
@@ -434,6 +434,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
     width: '100%',
+  },
+  actionsRowSmall: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+    width: '100%',
+    gap: 12,
   },
   bigButton: {
     flex: 1,
