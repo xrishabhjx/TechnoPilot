@@ -145,17 +145,13 @@ export default function App() {
     <Modal visible={showHistory} animationType="slide" onRequestClose={() => setShowHistory(false)}>
       <View style={styles.modalContainer}>
         <Text style={styles.modalTitle}>Maintenance History</Text>
-        <FlatList
-          data={HISTORY_EVENTS}
-          keyExtractor={(i) => i.date}
-          renderItem={({ item }) => (
-            <View style={styles.historyRow}>
-              <Text style={styles.historyDate}>{item.date}</Text>
-              <Text style={styles.historyIssue}>{item.issue}</Text>
-              <Text style={styles.historyDetail}>{item.diagnosis} • {item.resolution}</Text>
-            </View>
-          )}
-        />
+        {HISTORY_EVENTS.map((item) => (
+          <View key={item.date} style={styles.historyRow}>
+            <Text style={styles.historyDate}>{item.date}</Text>
+            <Text style={styles.historyIssue}>{item.issue}</Text>
+            <Text style={styles.historyDetail}>{item.diagnosis} • {item.resolution}</Text>
+          </View>
+        ))}
         <TouchableOpacity style={styles.modalClose} onPress={() => setShowHistory(false)}>
           <Text style={styles.modalCloseText}>Close</Text>
         </TouchableOpacity>
