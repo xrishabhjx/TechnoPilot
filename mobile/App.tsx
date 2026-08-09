@@ -59,87 +59,89 @@ export default function App() {
     <>
     <View style={styles.container}>
       <StatusBar style="dark" />
-      <FlatList
-        contentContainerStyle={styles.content}
-        data={engine.messages}
-        keyExtractor={(_, i) => String(i)}
-        renderItem={({ item }) => (
-          <View style={[styles.message, item.role === 'copilot' ? styles.messageBot : styles.messageUser]}>
-            <Text style={[styles.messageText, item.role === 'copilot' ? {} : { color: '#0f172a' }]}>{item.text}</Text>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.brand}>TECHNICIAN COPILOT</Text>
+            <Text style={styles.title}>Pump A17</Text>
           </View>
-        )}
-        ListEmptyComponent={<Text style={styles.cardText}>No messages yet — start the session.</Text>}
-        ListHeaderComponent={() => (
-          <>
-            <View style={styles.headerRow}>
-              <View>
-                <Text style={styles.brand}>TECHNICIAN COPILOT</Text>
-                <Text style={styles.title}>Pump A17</Text>
-              </View>
-              <TouchableOpacity style={styles.iconButton} onPress={() => setShowHistory(true)}>
-                <Text style={styles.iconButtonText}>History</Text>
-              </TouchableOpacity>
-            </View>
+          <TouchableOpacity style={styles.iconButton} onPress={() => setShowHistory(true)}>
+            <Text style={styles.iconButtonText}>History</Text>
+          </TouchableOpacity>
+        </View>
 
-            <View style={styles.cardInline}>
-              <Text style={styles.cardTitleSmall}>Session</Text>
-              <Text style={styles.cardTextSmall}>{caption}</Text>
-            </View>
+        <View style={styles.cardInline}>
+          <Text style={styles.cardTitleSmall}>Session</Text>
+          <Text style={styles.cardTextSmall}>{caption}</Text>
+        </View>
 
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Conversation</Text>
-              <TouchableOpacity style={styles.link} onPress={() => setShowEvidence((v) => !v)}>
-                <Text style={styles.linkText}>{showEvidence ? 'Hide evidence' : 'Show evidence'}</Text>
-              </TouchableOpacity>
-              {showEvidence && (
-                <View style={styles.evidenceList}>
-                  {engine.evidence.map((doc) => (
-                    <View key={doc.id} style={styles.evidenceRow}>
-                      <Text style={styles.evidenceTitle}>{doc.title}</Text>
-                      <Text style={styles.evidenceExcerpt}>{doc.excerpt}</Text>
-                    </View>
-                  ))}
-                  {engine.evidenceNote ? <Text style={styles.note}>{engine.evidenceNote}</Text> : null}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Conversation</Text>
+          <TouchableOpacity style={styles.link} onPress={() => setShowEvidence((v) => !v)}>
+            <Text style={styles.linkText}>{showEvidence ? 'Hide evidence' : 'Show evidence'}</Text>
+          </TouchableOpacity>
+
+          {showEvidence && (
+            <View style={styles.evidenceList}>
+              {engine.evidence.map((doc) => (
+                <View key={doc.id} style={styles.evidenceRow}>
+                  <Text style={styles.evidenceTitle}>{doc.title}</Text>
+                  <Text style={styles.evidenceExcerpt}>{doc.excerpt}</Text>
                 </View>
-              )}
+              ))}
+              {engine.evidenceNote ? <Text style={styles.note}>{engine.evidenceNote}</Text> : null}
             </View>
+          )}
 
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Capture</Text>
-              <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.primaryButton} onPress={toggleRecording} activeOpacity={0.85}>
-                  <Text style={styles.primaryButtonText}>{isRecording ? 'Stop mic' : 'Start mic'}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.ghostButton} onPress={openCamera} activeOpacity={0.85}>
-                  <Text style={styles.ghostButtonText}>Camera</Text>
-                </TouchableOpacity>
+          {/* Messages rendered inside the Conversation card */}
+          {engine.messages.length === 0 ? (
+            <Text style={styles.cardText}>No messages yet — start the session.</Text>
+          ) : (
+            engine.messages.map((item, i) => (
+              <View key={i} style={[styles.message, item.role === 'copilot' ? styles.messageBot : styles.messageUser]}>
+                <Text style={styles.messageText}>{item.text}</Text>
               </View>
-              {imageUri ? (
-                <Image source={{ uri: imageUri }} style={styles.previewImage} />
-              ) : (
-                <View style={styles.previewBox}>
-                  <Text style={styles.previewText}>Capture appears here.</Text>
-                </View>
-              )}
-            </View>
+            ))
+          )}
+        </View>
 
-            <View style={styles.cardInline}>
-              <Text style={styles.cardTitleSmall}>Next step</Text>
-              <Text style={styles.cardTextSmall}>Inspect the bearing housing and confirm the temperature trend before restarting the pump.</Text>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Capture</Text>
+          <View style={styles.buttonRow}>
+            <TouchableOpacity style={styles.primaryButton} onPress={toggleRecording} activeOpacity={0.85}>
+              <Text style={styles.primaryButtonText}>{isRecording ? 'Stop mic' : 'Start mic'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.ghostButton} onPress={openCamera} activeOpacity={0.85}>
+              <Text style={styles.ghostButtonText}>Camera</Text>
+            </TouchableOpacity>
+          </View>
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={styles.previewImage} />
+          ) : (
+            <View style={styles.previewBox}>
+              <Text style={styles.previewText}>Capture appears here.</Text>
             </View>
+          )}
+        </View>
 
-            <View style={styles.actionsRow}>
-              <TouchableOpacity accessibilityLabel="Start or advance session" style={styles.bigButton} onPress={advance} activeOpacity={0.9}>
-                <Text style={styles.bigButtonText}>{phase === 'idle' ? 'Start session' : phase === 'complete' ? 'Restart' : 'Next'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity accessibilityLabel="Reset session" style={styles.smallButton} onPress={() => { reset(); setImageUri(null); setIsRecording(false); }}>
-                <Text style={styles.smallButtonText}>Reset</Text>
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
-        ListFooterComponent={() => <View style={{ height: 80 }} />}
-      />
+        <View style={styles.cardInline}>
+          <Text style={styles.cardTitleSmall}>Next step</Text>
+          <Text style={styles.cardTextSmall}>Inspect the bearing housing and confirm the temperature trend before restarting the pump.</Text>
+        </View>
+
+        <View style={styles.actionsRow}>
+          <TouchableOpacity accessibilityLabel="Start or advance session" style={styles.bigButton} onPress={advance} activeOpacity={0.9}>
+            <Text style={styles.bigButtonText}>{phase === 'idle' ? 'Start session' : phase === 'complete' ? 'Restart' : 'Next'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity accessibilityLabel="Reset session" style={styles.smallButton} onPress={() => { reset(); setImageUri(null); setIsRecording(false); }}>
+            <Text style={styles.smallButtonText}>Reset</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.helperText}>Start mic records technician input; use Next to advance the assistant response.</Text>
+
+        <View style={{ height: 80 }} />
+      </ScrollView>
     </View>
 
     <Modal visible={showHistory} animationType="slide" onRequestClose={() => setShowHistory(false)}>
@@ -262,6 +264,7 @@ const styles = StyleSheet.create({
     color: '#0b1220',
     fontWeight: '700',
     fontSize: 15,
+    textAlign: 'center',
   },
   previewBox: {
     marginTop: 12,
@@ -456,6 +459,13 @@ const styles = StyleSheet.create({
   },
   smallButtonText: {
     color: '#0f172a',
-    fontWeight: '700'
+    fontWeight: '700',
+    textAlign: 'center'
+  },
+  helperText: {
+    marginTop: 12,
+    color: '#6b7b88',
+    fontSize: 13,
+    textAlign: 'center'
   },
 });
