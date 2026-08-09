@@ -10,13 +10,15 @@ interface ConversationPanelProps {
   phase: Phase;
   messages: TranscriptMessage[];
   busy: boolean;
+  isRecording: boolean;
   onMicClick: () => void;
 }
 
-function LiveStatusRow({ phase }: { phase: Phase }) {
-  if (phase === "idle" || phase === "waiting_for_input" || phase === "complete") {
+function LiveStatusRow({ phase, isRecording }: { phase: Phase; isRecording: boolean }) {
+  if (phase === "idle" || phase === "complete" || (!isRecording && phase === "waiting_for_input")) {
     return null;
   }
+  const label = phase === "waiting_for_input" ? "Listening for the next question…" : PHASE_CAPTION[phase];
   return (
     <div className="tc-live-row">
       <div className="tc-live-icon">
@@ -24,7 +26,7 @@ function LiveStatusRow({ phase }: { phase: Phase }) {
         <span className="tc-wave-bar" />
         <span className="tc-wave-bar" />
       </div>
-      <span className="tc-live-text">{PHASE_CAPTION[phase]}</span>
+      <span className="tc-live-text">{label}</span>
     </div>
   );
 }
@@ -33,6 +35,7 @@ export default function ConversationPanel({
   phase,
   messages,
   busy,
+  isRecording,
   onMicClick,
 }: ConversationPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -56,9 +59,9 @@ export default function ConversationPanel({
         {messages.map((m, i) => (
           <MessageBubble key={i} role={m.role} text={m.text} />
         ))}
-        <LiveStatusRow phase={phase} />
+        <LiveStatusRow phase={phase} isRecording={isRecording} />
       </div>
-      <VoiceControl phase={phase} busy={busy} onClick={onMicClick} />
+      <VoiceControl phase={phase} busy={busy} isRecording={isRecording} onClick={onMicClick} />
     </div>
   );
 }

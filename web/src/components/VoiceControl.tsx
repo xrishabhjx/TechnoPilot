@@ -5,33 +5,39 @@ import { Phase } from "@/types";
 interface VoiceControlProps {
   phase: Phase;
   busy: boolean;
+  isRecording: boolean;
   onClick: () => void;
 }
 
 // The mic button's own label differs from the pipeline caption for a few
-// phases (it speaks to "what do I do next", not "what's happening now").
+// phases, but when recording it should stay live until stopped.
 const LABEL_OVERRIDES: Partial<Record<Phase, string>> = {
   idle: "Start Troubleshooting",
-  waiting_for_input: "Tap to report next reading",
   complete: "Session complete",
 };
 
-export default function VoiceControl({ phase, busy, onClick }: VoiceControlProps) {
-  const label = LABEL_OVERRIDES[phase] ?? PHASE_CAPTION[phase];
+export default function VoiceControl({ phase, busy, isRecording, onClick }: VoiceControlProps) {
+  const buttonLabel = isRecording ? "Stop mic" : LABEL_OVERRIDES[phase] ?? PHASE_CAPTION[phase];
+  const statusText = isRecording
+    ? phase === "waiting_for_input"
+      ? "Listening for the next question…"
+      : "Listening to technician…"
+    : "";
   const disabled = busy || phase === "complete";
 
   return (
     <div className="tc-control">
       <button
-        className={`tc-mic-btn ${phase === "listening" ? "tc-mic-live" : ""}`}
+        className={`tc-mic-btn ${isRecording ? "tc-mic-live" : ""}`}
         onClick={onClick}
         disabled={disabled}
-        aria-label={label}
+        aria-label={buttonLabel}
       >
-        {phase === "speaking" ? <Volume2 size={22} /> : <Mic size={22} />}
+        <Mic size={22} />
       </button>
-      <div className="tc-mic-label">{label}</div>
-      {phase === "idle" && (
+      <div className="tc-mic-label">{buttonLabel}</div>
+      {statusText ? <div className="tc-mic-status">{statusText}</div> : null}
+      {!isRecording && phase === "idle" && (
         <div className="tc-mic-hint">Voice-first · hands-free troubleshooting</div>
       )}
     </div>

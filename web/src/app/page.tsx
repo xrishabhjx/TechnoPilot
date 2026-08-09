@@ -14,6 +14,8 @@ import { useDemoEngine } from "@/lib/demoEngine";
 
 export default function Page() {
   const engine = useDemoEngine();
+  const { phase, start, advance, reset, messages, evidence, evidenceNote, busy, currentTurn } = engine;
+  const [isRecording, setIsRecording] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [archOpen, setArchOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -24,9 +26,28 @@ export default function Page() {
     return () => clearTimeout(t);
   }, [toast]);
 
+  useEffect(() => {
+    if (!isRecording || phase !== "idle") return;
+    start();
+  }, [isRecording, phase, start]);
+
+  useEffect(() => {
+    if (!isRecording || phase !== "waiting_for_input") return;
+    const timer = setTimeout(() => advance(), 1200);
+    return () => clearTimeout(timer);
+  }, [isRecording, phase, advance]);
+
   const handleMicClick = () => {
-    if (engine.phase === "idle") engine.start();
-    else if (engine.phase === "waiting_for_input") engine.advance();
+    if (isRecording) {
+      setIsRecording(false);
+      return;
+    }
+
+    if (phase === "complete") {
+      return;
+    }
+
+    setIsRecording(true);
   };
 
   const handleReset = () => {
@@ -54,6 +75,7 @@ export default function Page() {
           phase={engine.phase}
           messages={engine.messages}
           busy={engine.busy}
+          isRecording={isRecording}
           onMicClick={handleMicClick}
         />
         <RetrievalPanel
@@ -70,7 +92,7 @@ export default function Page() {
       <MachineHistoryDrawer
         open={historyOpen}
         onClose={() => setHistoryOpen(false)}
-        highlight={engine.currentTurn ? engine.currentTurn.highlight : null}
+        highlight={currentTurn ? currentTurn.highlight : null}
       />
       <ArchitectureModal open={archOpen} onClose={() => setArchOpen(false)} />
       <Toast message={toast} />

@@ -246,9 +246,10 @@ body {
 }
 @keyframes tc-ring { 0% { transform: scale(0.85); opacity: 0.6; } 100% { transform: scale(1.35); opacity: 0; } }
 .tc-mic-label { font-size: 13px; font-weight: 500; color: var(--text-primary); text-align: center; }
+.tc-mic-status { font-size: 12px; color: var(--accent-strong); font-family: var(--font-plex-mono); }
 .tc-mic-hint { font-size: 11.5px; color: var(--text-tertiary); font-family: var(--font-plex-mono); }
 
-/* ---- Evidence panel ---- */
+/* ---- Evidence panel ---- }
 .tc-evidence-list { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; max-height: 420px; }
 .tc-evidence-note {
   display: flex; align-items: center; gap: 6px;
