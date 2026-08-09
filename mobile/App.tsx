@@ -6,6 +6,11 @@ import * as ImagePicker from 'expo-image-picker';
 import { PHASE_CAPTION, TURNS } from './src/demoData';
 import { useDemoEngine } from './src/demoEngine';
 import { HISTORY_EVENTS } from './src/pumpA17';
+import { DOCS, EQUIPMENT } from './src/pumpA17';
+import MachineCard from './src/components/MachineCard';
+import Transcript from './src/components/Transcript';
+import EvidencePanel from './src/components/EvidencePanel';
+import theme from './src/theme';
 
 export default function App() {
   const [isRecording, setIsRecording] = useState(false);
@@ -70,6 +75,8 @@ export default function App() {
           </TouchableOpacity>
         </View>
 
+        <MachineCard equipment={EQUIPMENT} />
+
         <View style={styles.cardInline}>
           <Text style={styles.cardTitleSmall}>Session</Text>
           <Text style={styles.cardTextSmall}>{caption}</Text>
@@ -81,36 +88,19 @@ export default function App() {
             <Text style={styles.linkText}>{showEvidence ? 'Hide evidence' : 'Show evidence'}</Text>
           </TouchableOpacity>
 
-          {showEvidence && (
-            <View style={styles.evidenceList}>
-              {engine.evidence.map((doc) => (
-                <View key={doc.id} style={styles.evidenceRow}>
-                  <Text style={styles.evidenceTitle}>{doc.title}</Text>
-                  <Text style={styles.evidenceExcerpt}>{doc.excerpt}</Text>
-                </View>
-              ))}
-              {engine.evidenceNote ? <Text style={styles.note}>{engine.evidenceNote}</Text> : null}
-            </View>
-          )}
+          {showEvidence && <EvidencePanel evidence={engine.evidence} />}
 
           {/* Messages rendered inside the Conversation card */}
           {engine.messages.length === 0 ? (
             <Text style={styles.cardText}>No messages yet — start the session.</Text>
           ) : (
-            engine.messages.map((item, i) => (
-              <View key={i} style={[styles.message, item.role === 'copilot' ? styles.messageBot : styles.messageUser]}>
-                <Text style={styles.messageText}>{item.text}</Text>
-              </View>
-            ))
+            <Transcript messages={engine.messages} />
           )}
         </View>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Capture</Text>
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.primaryButton} onPress={toggleRecording} activeOpacity={0.85}>
-              <Text style={styles.primaryButtonText}>{isRecording ? 'Stop mic' : 'Start mic'}</Text>
-            </TouchableOpacity>
             <TouchableOpacity style={styles.ghostButton} onPress={openCamera} activeOpacity={0.85}>
               <Text style={styles.ghostButtonText}>Camera</Text>
             </TouchableOpacity>
