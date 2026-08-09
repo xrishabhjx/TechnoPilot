@@ -8,7 +8,6 @@ import ConversationPanel from "@/components/ConversationPanel";
 import RetrievalPanel from "@/components/RetrievalPanel";
 import SessionSummary from "@/components/SessionSummary";
 import MachineHistoryDrawer from "@/components/MachineHistoryDrawer";
-import ArchitectureModal from "@/components/ArchitectureModal";
 import Toast from "@/components/Toast";
 import { useDemoEngine } from "@/lib/demoEngine";
 
@@ -17,7 +16,6 @@ export default function Page() {
   const { phase, start, advance, reset, messages, evidence, evidenceNote, busy, currentTurn } = engine;
   const [isRecording, setIsRecording] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [archOpen, setArchOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,15 +29,27 @@ export default function Page() {
     start();
   }, [isRecording, phase, start]);
 
+  // Auto-advance to the next turn shortly after the copilot reply finishes.
   useEffect(() => {
-    if (!isRecording || phase !== "waiting_for_input") return;
-    const timer = setTimeout(() => advance(), 1200);
-    return () => clearTimeout(timer);
-  }, [isRecording, phase, advance]);
+    let timer: any = null;
+    if (phase === "waiting_for_input" && !busy && messages.length > 0) {
+      console.log('[auto:web] scheduling advance in 4000ms');
+      timer = setTimeout(() => {
+        console.log('[auto:web] advancing now');
+        advance();
+      }, 4000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [phase, busy, messages.length, advance]);
 
   const handleMicClick = () => {
     if (isRecording) {
       setIsRecording(false);
+      if (phase === "waiting_for_input") {
+        advance();
+      }
       return;
     }
 
@@ -53,18 +63,13 @@ export default function Page() {
   const handleReset = () => {
     engine.reset();
     setHistoryOpen(false);
-    setArchOpen(false);
   };
 
   const handleLogObservation = () => setToast("Observation logged ✓");
 
   return (
     <div className="tc-shell">
-      <TopBar
-        onOpenHistory={() => setHistoryOpen(true)}
-        onOpenArchitecture={() => setArchOpen(true)}
-        onReset={handleReset}
-      />
+      <TopBar onOpenHistory={() => setHistoryOpen(true)} onReset={handleReset} />
 
       <EquipmentCard phase={engine.phase} />
 
@@ -94,7 +99,7 @@ export default function Page() {
         onClose={() => setHistoryOpen(false)}
         highlight={currentTurn ? currentTurn.highlight : null}
       />
-      <ArchitectureModal open={archOpen} onClose={() => setArchOpen(false)} />
+      
       <Toast message={toast} />
     </div>
   );

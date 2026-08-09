@@ -105,9 +105,10 @@ export function useDemoEngine(): DemoEngine {
   }, [phase, busy, playTurn]);
 
   const advance = useCallback(() => {
-    if (phase !== 'waiting_for_input' || busy) return;
+    if (busy) return;
+    if (turnIndex >= TURNS.length - 1) return;
     playTurn(turnIndex + 1);
-  }, [phase, busy, turnIndex, playTurn]);
+  }, [busy, turnIndex, playTurn]);
 
   const reset = useCallback(() => {
     runIdRef.current += 1;

@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, Modal } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import * as Speech from 'expo-speech';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
 import { PHASE_CAPTION } from './src/demoData';
 import { useDemoEngine } from './src/demoEngine';
 import { HISTORY_EVENTS } from './src/pumpA17';
@@ -9,13 +9,12 @@ import { DOCS, EQUIPMENT } from './src/pumpA17';
 import MachineCard from './src/components/MachineCard';
 import Transcript from './src/components/Transcript';
 import EvidencePanel from './src/components/EvidencePanel';
-import theme from './src/theme';
 
 export default function App() {
   const [isRecording, setIsRecording] = useState(false);
-  const [imageUri, setImageUri] = useState<string | null>(null);
+  const spokenRef = useRef<string | null>(null);
   const engine = useDemoEngine();
-  const { phase, start, advance: engineAdvance, reset } = engine;
+  const { phase, start, advance: engineAdvance, reset, busy } = engine;
   const caption = useMemo(
     () => {
       if (isRecording) {
@@ -23,7 +22,7 @@ export default function App() {
           return 'Session complete — press Stop mic to finish.';
         }
         return phase === 'waiting_for_input'
-          ? 'Listening for the next question…'
+          ? 'Speak your next question, then press Stop mic.'
           : 'Listening to technician…';
       }
       return PHASE_CAPTION[phase];
@@ -33,7 +32,13 @@ export default function App() {
 
   const toggleRecording = () => {
     if (isRecording) {
+      console.log('[mic] Stop requested — phase:', phase, 'busy:', busy);
+      Speech.stop();
       setIsRecording(false);
+      if (phase === 'waiting_for_input') {
+        console.log('[mic] Advancing engine from turnIndex', engine.turnIndex);
+        engineAdvance();
+      }
       return;
     }
 
@@ -44,19 +49,24 @@ export default function App() {
     setIsRecording(true);
   };
 
-  const openCamera = async () => {
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        quality: 0.8,
-        allowsEditing: true,
-      });
-      if (!result.canceled && result.assets?.[0]?.uri) {
-        setImageUri(result.assets[0].uri);
-      }
-    } catch (error) {
-      Alert.alert('Camera', 'Camera access unavailable or denied.');
+  useEffect(() => {
+    console.log('[engine] phase=', phase, 'busy=', busy, 'messages=', engine.messages.length, 'turnIndex=', engine.turnIndex);
+  }, [phase, busy, engine.messages.length, engine.turnIndex]);
+
+  // Auto-advance to the next turn shortly after the copilot reply finishes.
+  useEffect(() => {
+    let timer: any = null;
+    if (phase === 'waiting_for_input' && !busy && engine.messages.length > 0) {
+      console.log('[auto] scheduling advance in 4000ms');
+      timer = setTimeout(() => {
+        console.log('[auto] advancing now');
+        engineAdvance();
+      }, 4000);
     }
-  };
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [phase, busy, engine.messages.length, engineAdvance]);
 
   useEffect(() => {
     if (!isRecording || phase !== 'idle') {
@@ -66,19 +76,32 @@ export default function App() {
   }, [isRecording, phase, start]);
 
   useEffect(() => {
-    if (!isRecording || phase !== 'waiting_for_input') {
+    const lastMessage = engine.messages[engine.messages.length - 1];
+    console.log('[speech] engine.messages changed, last=', lastMessage);
+    if (!lastMessage || lastMessage.role !== 'copilot' || lastMessage.text === spokenRef.current) {
       return;
     }
 
-    const timer = setTimeout(() => {
-      engineAdvance();
-    }, 1200);
+    spokenRef.current = lastMessage.text;
+    console.log('[speech] speaking:', lastMessage.text.slice(0, 80));
+    Speech.stop();
+    Speech.speak(lastMessage.text, {
+      pitch: 1,
+      rate: 0.95,
+    });
+  }, [engine.messages]);
 
-    return () => clearTimeout(timer);
-  }, [isRecording, phase, engineAdvance]);
+  useEffect(() => {
+    if (phase === 'speaking' && isRecording) {
+      Speech.stop();
+      setIsRecording(false);
+    }
+  }, [phase, isRecording]);
 
   const [showEvidence, setShowEvidence] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+
+  // Removed auto-resume: the user must explicitly start the mic for the next question.
 
   return (
     <>
@@ -121,37 +144,28 @@ export default function App() {
           )}
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Capture</Text>
-          <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.ghostButton} onPress={openCamera} activeOpacity={0.85}>
-              <Text style={styles.ghostButtonText}>Camera</Text>
-            </TouchableOpacity>
+        {engine.messages.length > 0 && (
+          <View style={styles.cardInline}>
+            <Text style={styles.cardTitleSmall}>Next step</Text>
+            <Text style={styles.cardTextSmall}>Inspect the bearing housing and confirm the temperature trend before restarting the pump.</Text>
           </View>
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.previewImage} />
-          ) : (
-            <View style={styles.previewBox}>
-              <Text style={styles.previewText}>Capture appears here.</Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.cardInline}>
-          <Text style={styles.cardTitleSmall}>Next step</Text>
-          <Text style={styles.cardTextSmall}>Inspect the bearing housing and confirm the temperature trend before restarting the pump.</Text>
-        </View>
+        )}
 
         <View style={styles.actionsRowSmall}>
           <TouchableOpacity
             accessibilityLabel="Toggle mic recording"
-            style={[styles.primaryButton, isRecording && styles.primaryButtonRecording]}
+            style={[
+              styles.primaryButton,
+              !busy && isRecording && styles.primaryButtonRecording,
+              busy && styles.primaryButtonBusy,
+            ]}
             onPress={toggleRecording}
             activeOpacity={0.9}
+            disabled={busy}
           >
-            <Text style={styles.primaryButtonText}>{isRecording ? 'Stop mic' : 'Start mic'}</Text>
+            <Text style={[styles.primaryButtonText, busy && styles.primaryButtonTextBusy]}>{busy ? 'Copilot responding…' : isRecording ? 'Stop mic' : 'Start mic'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity accessibilityLabel="Reset session" style={styles.smallButton} onPress={() => { reset(); setImageUri(null); setIsRecording(false); }}>
+          <TouchableOpacity accessibilityLabel="Reset session" style={styles.smallButton} onPress={() => { Speech.stop(); reset(); setIsRecording(false); }}>
             <Text style={styles.smallButtonText}>Reset</Text>
           </TouchableOpacity>
         </View>
@@ -162,6 +176,7 @@ export default function App() {
             : 'Press Start mic to open the conversation, then keep talking until you press Stop mic.'}
         </Text>
 
+        {/* debug panel removed */}
         <View style={{ height: 80 }} />
       </ScrollView>
     </View>
@@ -270,6 +285,15 @@ const styles = StyleSheet.create({
   },
   primaryButtonRecording: {
     backgroundColor: '#b91c1c',
+  },
+  primaryButtonDisabled: {
+    opacity: 0.6,
+  },
+  primaryButtonBusy: {
+    backgroundColor: '#f3f4f6',
+  },
+  primaryButtonTextBusy: {
+    color: '#0b1220',
   },
   primaryButtonRecording: {
     backgroundColor: '#b91c1c',
@@ -418,6 +442,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 15,
   },
+  // debug styles removed
   evidenceList: {
     marginTop: 8,
   },

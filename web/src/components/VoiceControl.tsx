@@ -17,7 +17,7 @@ const LABEL_OVERRIDES: Partial<Record<Phase, string>> = {
 };
 
 export default function VoiceControl({ phase, busy, isRecording, onClick }: VoiceControlProps) {
-  const buttonLabel = isRecording ? "Stop mic" : LABEL_OVERRIDES[phase] ?? PHASE_CAPTION[phase];
+  const buttonLabel = busy ? "Copilot responding…" : isRecording ? "Stop mic" : LABEL_OVERRIDES[phase] ?? PHASE_CAPTION[phase];
   const statusText = isRecording
     ? phase === "waiting_for_input"
       ? "Listening for the next question…"
@@ -28,7 +28,7 @@ export default function VoiceControl({ phase, busy, isRecording, onClick }: Voic
   return (
     <div className="tc-control">
       <button
-        className={`tc-mic-btn ${isRecording ? "tc-mic-live" : ""}`}
+        className={`tc-mic-btn ${isRecording ? "tc-mic-live" : ""} ${busy ? "tc-mic-busy" : ""}`}
         onClick={onClick}
         disabled={disabled}
         aria-label={buttonLabel}
