@@ -1,9 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, FlatList, Modal } from 'react-native';
-import { Audio } from 'expo-av';
+import { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, Modal } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { PHASE_CAPTION, TURNS } from './src/demoData';
+import { PHASE_CAPTION } from './src/demoData';
 import { useDemoEngine } from './src/demoEngine';
 import { HISTORY_EVENTS } from './src/pumpA17';
 import { DOCS, EQUIPMENT } from './src/pumpA17';
@@ -16,70 +15,70 @@ export default function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const engine = useDemoEngine();
-  const { phase, currentTurn, start, advance: engineAdvance, reset } = engine;
-  const caption = useMemo(() => PHASE_CAPTION[phase], [phase]);
+  const { phase, start, advance: engineAdvance, reset } = engine;
+  const caption = useMemo(
+    () => {
+      if (isRecording) {
+        if (phase === 'complete') {
+          return 'Session complete — press Stop mic to finish.';
+        }
+        return phase === 'waiting_for_input'
+          ? 'Listening for the next question…'
+          : 'Listening to technician…';
+      }
+      return PHASE_CAPTION[phase];
+    },
+    [phase, isRecording]
+  );
 
-  const advance = () => {
-    if (phase === 'idle') {
-      start();
-      return;
-    }
-    if (phase === 'complete') {
-      reset();
-      return;
-    }
-    engineAdvance();
-  };
-
-  const toggleRecording = async () => {
+  const toggleRecording = () => {
     if (isRecording) {
       setIsRecording(false);
-      engineAdvance();
+      return;
+    }
+
+    if (phase === 'complete') {
       return;
     }
 
     setIsRecording(true);
-    if (phase === 'idle') start();
   };
 
   const openCamera = async () => {
     try {
-      const result = await ImagePicker.launchCameraAsync({ 
+      const result = await ImagePicker.launchCameraAsync({
         quality: 0.8,
         allowsEditing: true,
       });
       if (!result.canceled && result.assets?.[0]?.uri) {
         setImageUri(result.assets[0].uri);
-        setPhase('reasoning');
       }
     } catch (error) {
       Alert.alert('Camera', 'Camera access unavailable or denied.');
     }
   };
 
+  useEffect(() => {
+    if (!isRecording || phase !== 'idle') {
+      return;
+    }
+    start();
+  }, [isRecording, phase, start]);
+
+  useEffect(() => {
+    if (!isRecording || phase !== 'waiting_for_input') {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      engineAdvance();
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [isRecording, phase, engineAdvance]);
+
   const [showEvidence, setShowEvidence] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-
-  // Auto-run demo mode so the UI looks like a working demo with hardcoded data
-  const DEMO_AUTO = true;
-
-  // When demo mode is enabled, start the engine on mount and auto-advance between turns
-  useEffect(() => {
-    if (!DEMO_AUTO) return;
-    if (phase === 'idle' && engine.messages.length === 0) {
-      start();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Advance automatically when engine reaches waiting state
-  useEffect(() => {
-    if (!DEMO_AUTO) return;
-    if (phase === 'waiting_for_input') {
-      const t = setTimeout(() => engineAdvance(), 1200);
-      return () => clearTimeout(t);
-    }
-  }, [phase, engineAdvance]);
 
   return (
     <>
@@ -100,7 +99,10 @@ export default function App() {
 
         <View style={styles.cardInline}>
           <Text style={styles.cardTitleSmall}>Session</Text>
-          <Text style={styles.cardTextSmall}>{caption}</Text>
+          <View style={styles.recordingRow}>
+            <View style={[styles.recordingDot, isRecording && styles.recordingDotActive]} />
+            <Text style={styles.cardTextSmall}>{caption}</Text>
+          </View>
         </View>
 
         <View style={styles.card}>
@@ -141,7 +143,12 @@ export default function App() {
         </View>
 
         <View style={styles.actionsRowSmall}>
-          <TouchableOpacity accessibilityLabel="Toggle mic recording" style={styles.primaryButton} onPress={toggleRecording} activeOpacity={0.9}>
+          <TouchableOpacity
+            accessibilityLabel="Toggle mic recording"
+            style={[styles.primaryButton, isRecording && styles.primaryButtonRecording]}
+            onPress={toggleRecording}
+            activeOpacity={0.9}
+          >
             <Text style={styles.primaryButtonText}>{isRecording ? 'Stop mic' : 'Start mic'}</Text>
           </TouchableOpacity>
           <TouchableOpacity accessibilityLabel="Reset session" style={styles.smallButton} onPress={() => { reset(); setImageUri(null); setIsRecording(false); }}>
@@ -149,7 +156,11 @@ export default function App() {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.helperText}>Mic controls the session: tap to start recording, tap again to stop and send input.</Text>
+        <Text style={styles.helperText}>
+          {isRecording
+            ? 'Mic is live: keep speaking while it listens and answers. Press Stop mic when you want to end the session.'
+            : 'Press Start mic to open the conversation, then keep talking until you press Stop mic.'}
+        </Text>
 
         <View style={{ height: 80 }} />
       </ScrollView>
@@ -256,6 +267,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     elevation: 2,
+  },
+  primaryButtonRecording: {
+    backgroundColor: '#b91c1c',
+  },
+  primaryButtonRecording: {
+    backgroundColor: '#b91c1c',
   },
   primaryButtonText: {
     color: '#fff',
@@ -486,5 +503,23 @@ const styles = StyleSheet.create({
     color: '#6b7b88',
     fontSize: 13,
     textAlign: 'center'
+  },
+  recordingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  recordingDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: '#cbd5e1',
+  },
+  recordingDotActive: {
+    backgroundColor: '#ef4444',
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 4,
   },
 });
