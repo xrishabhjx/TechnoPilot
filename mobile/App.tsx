@@ -13,6 +13,7 @@ import EvidencePanel from './src/components/EvidencePanel';
 export default function App() {
   const [isRecording, setIsRecording] = useState(false);
   const spokenRef = useRef<string | null>(null);
+  const [spokenPlaying, setSpokenPlaying] = useState(false);
   const engine = useDemoEngine();
   const { phase, start, advance: engineAdvance, reset, busy } = engine;
   const caption = useMemo(
@@ -30,15 +31,19 @@ export default function App() {
     [phase, isRecording]
   );
 
+  const micButtonLabel = (busy || spokenPlaying)
+    ? 'Copilot responding'
+    : isRecording
+    ? 'Stop mic'
+    : 'Start mic';
+
   const toggleRecording = () => {
     if (isRecording) {
       console.log('[mic] Stop requested — phase:', phase, 'busy:', busy);
       Speech.stop();
+      setSpokenPlaying(false);
       setIsRecording(false);
-      if (phase === 'waiting_for_input') {
-        console.log('[mic] Advancing engine from turnIndex', engine.turnIndex);
-        engineAdvance();
-      }
+      // stopping the mic ends the conversation; do not auto-advance
       return;
     }
 
@@ -56,7 +61,7 @@ export default function App() {
   // Auto-advance to the next turn shortly after the copilot reply finishes.
   useEffect(() => {
     let timer: any = null;
-    if (phase === 'waiting_for_input' && !busy && engine.messages.length > 0) {
+    if (phase === 'waiting_for_input' && !busy && !spokenPlaying && engine.messages.length > 0 && isRecording) {
       console.log('[auto] scheduling advance in 4000ms');
       timer = setTimeout(() => {
         console.log('[auto] advancing now');
@@ -66,7 +71,7 @@ export default function App() {
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [phase, busy, engine.messages.length, engineAdvance]);
+  }, [phase, busy, spokenPlaying, engine.messages.length, engineAdvance]);
 
   useEffect(() => {
     if (!isRecording || phase !== 'idle') {
@@ -85,18 +90,22 @@ export default function App() {
     spokenRef.current = lastMessage.text;
     console.log('[speech] speaking:', lastMessage.text.slice(0, 80));
     Speech.stop();
+    setSpokenPlaying(true);
     Speech.speak(lastMessage.text, {
       pitch: 1,
       rate: 0.95,
+      onDone: () => {
+        console.log('[speech] playback done');
+        setSpokenPlaying(false);
+      },
+      onError: () => {
+        console.log('[speech] playback error');
+        setSpokenPlaying(false);
+      },
     });
   }, [engine.messages]);
 
-  useEffect(() => {
-    if (phase === 'speaking' && isRecording) {
-      Speech.stop();
-      setIsRecording(false);
-    }
-  }, [phase, isRecording]);
+  // Do not stop recording when copilot speaks — keep mic live for entire session.
 
   const [showEvidence, setShowEvidence] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -157,13 +166,13 @@ export default function App() {
             style={[
               styles.primaryButton,
               !busy && isRecording && styles.primaryButtonRecording,
-              busy && styles.primaryButtonBusy,
+              (busy || spokenPlaying) && styles.primaryButtonBusy,
             ]}
             onPress={toggleRecording}
             activeOpacity={0.9}
-            disabled={busy}
+            disabled={phase === 'complete'}
           >
-            <Text style={[styles.primaryButtonText, busy && styles.primaryButtonTextBusy]}>{busy ? 'Copilot responding…' : isRecording ? 'Stop mic' : 'Start mic'}</Text>
+            <Text style={[styles.primaryButtonText, (busy || spokenPlaying) && styles.primaryButtonTextBusy]}>{micButtonLabel}</Text>
           </TouchableOpacity>
           <TouchableOpacity accessibilityLabel="Reset session" style={styles.smallButton} onPress={() => { Speech.stop(); reset(); setIsRecording(false); }}>
             <Text style={styles.smallButtonText}>Reset</Text>
