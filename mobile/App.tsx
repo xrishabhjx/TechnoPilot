@@ -60,6 +60,27 @@ export default function App() {
   const [showEvidence, setShowEvidence] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
+  // Auto-run demo mode so the UI looks like a working demo with hardcoded data
+  const DEMO_AUTO = true;
+
+  // When demo mode is enabled, start the engine on mount and auto-advance between turns
+  useEffect(() => {
+    if (!DEMO_AUTO) return;
+    if (phase === 'idle' && engine.messages.length === 0) {
+      start();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Advance automatically when engine reaches waiting state
+  useEffect(() => {
+    if (!DEMO_AUTO) return;
+    if (phase === 'waiting_for_input') {
+      const t = setTimeout(() => engineAdvance(), 1200);
+      return () => clearTimeout(t);
+    }
+  }, [phase, engineAdvance]);
+
   return (
     <>
     <View style={styles.container}>
