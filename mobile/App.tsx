@@ -56,6 +56,7 @@ export default function App() {
   const [showHistory, setShowHistory] = useState(false);
 
   return (
+    <>
     <View style={styles.container}>
       <StatusBar style="dark" />
       <ScrollView contentContainerStyle={styles.content}>
@@ -157,6 +158,7 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </Modal>
+    </>
   );
 }
 
