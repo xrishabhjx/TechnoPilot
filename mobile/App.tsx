@@ -129,15 +129,16 @@ export default function App() {
             </View>
 
             <View style={styles.actionsRow}>
-              <TouchableOpacity style={styles.bigButton} onPress={advance} activeOpacity={0.9}>
+              <TouchableOpacity accessibilityLabel="Start or advance session" style={styles.bigButton} onPress={advance} activeOpacity={0.9}>
                 <Text style={styles.bigButtonText}>{phase === 'idle' ? 'Start session' : phase === 'complete' ? 'Restart' : 'Next'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.smallButton} onPress={() => { reset(); setImageUri(null); setIsRecording(false); }}>
+              <TouchableOpacity accessibilityLabel="Reset session" style={styles.smallButton} onPress={() => { reset(); setImageUri(null); setIsRecording(false); }}>
                 <Text style={styles.smallButtonText}>Reset</Text>
               </TouchableOpacity>
             </View>
           </>
         )}
+        ListFooterComponent={() => <View style={{ height: 80 }} />}
       />
     </View>
 
@@ -338,17 +339,20 @@ const styles = StyleSheet.create({
     padding: 12,
     borderWidth: 1,
     borderColor: '#e6eef6',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
   },
   cardTitleSmall: {
     fontSize: 13,
     fontWeight: '700',
     color: '#0f172a',
+    marginBottom: 6,
   },
   cardTextSmall: {
     color: '#475569',
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   message: {
     padding: 12,
@@ -414,8 +418,10 @@ const styles = StyleSheet.create({
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 10,
+    width: '100%',
   },
   bigButton: {
     flex: 1,
@@ -423,20 +429,21 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
+    marginRight: 12,
   },
   bigButtonText: {
     color: '#fff',
     fontWeight: '700',
   },
   smallButton: {
-    marginLeft: 10,
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 14,
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#e6eef6',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    minWidth: 90,
   },
   smallButtonText: {
     color: '#0f172a',
