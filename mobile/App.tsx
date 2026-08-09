@@ -164,12 +164,12 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f7fb',
+    backgroundColor: '#f3f6f9',
   },
   content: {
     padding: 20,
     paddingTop: 48,
-    gap: 14,
+    gap: 18,
   },
   header: {
     flexDirection: 'row',
@@ -178,20 +178,20 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   eyebrow: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1.2,
-    color: '#64748b',
+    color: '#8b98a6',
     marginBottom: 6,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0f172a',
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#0b1220',
   },
   subtitle: {
     fontSize: 13,
-    color: '#475569',
+    color: '#516575',
     marginTop: 4,
   },
   badge: {
@@ -208,25 +208,26 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
-    padding: 16,
+    padding: 18,
     borderWidth: 1,
-    borderColor: '#dbe3ec',
+    borderColor: '#e9f0f6',
+    marginBottom: 12,
   },
   cardTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0f172a',
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0b1220',
     marginBottom: 8,
   },
   cardText: {
-    fontSize: 13,
+    fontSize: 15,
     color: '#475569',
-    lineHeight: 20,
+    lineHeight: 22,
     marginTop: 4,
   },
   note: {
     marginTop: 8,
-    fontSize: 12,
+    fontSize: 13,
     color: '#b45309',
     fontWeight: '600',
   },
@@ -237,25 +238,30 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     flex: 1,
-    backgroundColor: '#f59e0b',
+    backgroundColor: '#0b1220',
     borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: 'center',
+    elevation: 2,
   },
   primaryButtonText: {
     color: '#fff',
-    fontWeight: '700',
+    fontWeight: '800',
+    fontSize: 16,
   },
-  secondaryButton: {
+  ghostButton: {
     flex: 1,
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: 'center',
-    backgroundColor: '#eef2f7',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#e9f0f6',
   },
-  secondaryButtonText: {
-    color: '#0f172a',
+  ghostButtonText: {
+    color: '#0b1220',
     fontWeight: '700',
+    fontSize: 15,
   },
   previewBox: {
     marginTop: 12,
@@ -263,15 +269,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: '#c2cedb',
+    borderColor: '#dce7f2',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#f8fafc',
+    padding: 14,
+    backgroundColor: '#fbfdff',
   },
   previewText: {
-    color: '#64748b',
+    color: '#6b7b88',
     textAlign: 'center',
+    fontSize: 14,
   },
   previewImage: {
     marginTop: 12,
@@ -351,28 +358,34 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   message: {
-    padding: 12,
-    borderRadius: 10,
-    marginVertical: 6,
-    maxWidth: '85%'
+    padding: 14,
+    borderRadius: 12,
+    marginVertical: 8,
+    maxWidth: '85%',
   },
   messageUser: {
-    backgroundColor: '#eef2f7',
+    backgroundColor: '#e6f0ff',
     alignSelf: 'flex-start',
+    borderColor: '#cfe0ff',
+    borderWidth: 1,
   },
   messageBot: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#f1f5f9',
     alignSelf: 'flex-end',
+    borderColor: '#e6edf3',
+    borderWidth: 1,
   },
   messageText: {
-    color: '#fff'
+    color: '#0b1220',
+    fontSize: 15,
   },
   link: {
     marginTop: 8,
   },
   linkText: {
-    color: '#2563eb',
+    color: '#0b5fff',
     fontWeight: '700',
+    fontSize: 15,
   },
   evidenceList: {
     marginTop: 8,
