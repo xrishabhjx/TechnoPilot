@@ -49,7 +49,10 @@ export default function ConversationPanel({
   return (
     <div className="tc-panel">
       <div className="tc-panel-head">
-        <span className="tc-panel-title">CONVERSATION</span>
+        <div>
+          <span className="tc-panel-title">CONVERSATION</span>
+          <div className="tc-panel-subtitle">Voice-first diagnostic workflow with live technician + copilot exchange.</div>
+        </div>
         <span className="tc-equip-meta">
           Synthetic Pump A17 data · Prototype demonstration
         </span>
