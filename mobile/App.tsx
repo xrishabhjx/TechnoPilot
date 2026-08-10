@@ -125,7 +125,7 @@ export default function App() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.brand}>TECHNICIAN COPILOT</Text>
+            <Text style={styles.brand}>Tech Whisper</Text>
             <Text style={styles.title}>Pump A17</Text>
           </View>
           <TouchableOpacity style={styles.iconButton} onPress={() => setShowHistory(true)}>
