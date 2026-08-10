@@ -26,13 +26,16 @@ export default function Page() {
 
   useEffect(() => {
     if (!isRecording || phase !== "idle") return;
-    start();
+    const delay = setTimeout(() => {
+      start();
+    }, 3500);
+    return () => clearTimeout(delay);
   }, [isRecording, phase, start]);
 
   // Auto-advance to the next turn shortly after the copilot reply finishes.
   useEffect(() => {
     let timer: any = null;
-    if (phase === "waiting_for_input" && !busy && messages.length > 0) {
+    if (isRecording && phase === "waiting_for_input" && !busy && messages.length > 0) {
       console.log('[auto:web] scheduling advance in 4000ms');
       timer = setTimeout(() => {
         console.log('[auto:web] advancing now');
@@ -42,14 +45,12 @@ export default function Page() {
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [phase, busy, messages.length, advance]);
+  }, [isRecording, phase, busy, messages.length, advance]);
 
   const handleMicClick = () => {
     if (isRecording) {
       setIsRecording(false);
-      if (phase === "waiting_for_input") {
-        advance();
-      }
+      engine.stop();
       return;
     }
 

@@ -23,7 +23,7 @@ export default function VoiceControl({ phase, busy, isRecording, onClick }: Voic
       ? "Listening for the next question…"
       : "Listening to technician…"
     : "";
-  const disabled = busy || phase === "complete";
+  const disabled = phase === "complete" && !isRecording;
 
   return (
     <div className="tc-control">

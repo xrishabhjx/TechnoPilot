@@ -19,6 +19,7 @@ export interface DemoEngineState {
 export interface DemoEngine extends DemoEngineState {
   start: () => void;
   advance: () => void;
+  stop: () => void;
   reset: () => void;
   currentTurn: (typeof TURNS)[number] | null;
 }
@@ -93,6 +94,11 @@ export function useDemoEngine(): DemoEngine {
     playTurn(turnIndex + 1);
   }, [busy, turnIndex, playTurn]);
 
+  const stop = useCallback(() => {
+    runIdRef.current += 1;
+    setBusy(false);
+  }, []);
+
   const reset = useCallback(() => {
     runIdRef.current += 1; // invalidate any in-flight playTurn
     setPhase("idle");
@@ -121,6 +127,7 @@ export function useDemoEngine(): DemoEngine {
     busy,
     start,
     advance,
+    stop,
     reset,
     currentTurn: turnIndex >= 0 ? TURNS[turnIndex] : null,
   };

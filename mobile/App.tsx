@@ -43,7 +43,7 @@ export default function App() {
       Speech.stop();
       setSpokenPlaying(false);
       setIsRecording(false);
-      // stopping the mic ends the conversation; do not auto-advance
+      engine.stop();
       return;
     }
 
@@ -71,16 +71,22 @@ export default function App() {
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [phase, busy, spokenPlaying, engine.messages.length, engineAdvance]);
+  }, [phase, busy, spokenPlaying, engine.messages.length, engineAdvance, isRecording]);
 
   useEffect(() => {
     if (!isRecording || phase !== 'idle') {
       return;
     }
-    start();
+    const delay = setTimeout(() => {
+      start();
+    }, 3500);
+    return () => clearTimeout(delay);
   }, [isRecording, phase, start]);
 
   useEffect(() => {
+    if (!isRecording) {
+      return;
+    }
     const lastMessage = engine.messages[engine.messages.length - 1];
     console.log('[speech] engine.messages changed, last=', lastMessage);
     if (!lastMessage || lastMessage.role !== 'copilot' || lastMessage.text === spokenRef.current) {
@@ -103,7 +109,7 @@ export default function App() {
         setSpokenPlaying(false);
       },
     });
-  }, [engine.messages]);
+  }, [engine.messages, isRecording]);
 
   // Do not stop recording when copilot speaks — keep mic live for entire session.
 
@@ -170,7 +176,7 @@ export default function App() {
             ]}
             onPress={toggleRecording}
             activeOpacity={0.9}
-            disabled={phase === 'complete'}
+            disabled={phase === 'complete' && !isRecording}
           >
             <Text style={[styles.primaryButtonText, (busy || spokenPlaying) && styles.primaryButtonTextBusy]}>{micButtonLabel}</Text>
           </TouchableOpacity>
@@ -303,9 +309,6 @@ const styles = StyleSheet.create({
   },
   primaryButtonTextBusy: {
     color: '#0b1220',
-  },
-  primaryButtonRecording: {
-    backgroundColor: '#b91c1c',
   },
   primaryButtonText: {
     color: '#fff',
@@ -476,19 +479,6 @@ const styles = StyleSheet.create({
   iconButtonText: {
     color: '#0f172a',
     fontWeight: '700'
-  },
-  ghostButton: {
-    flex: 1,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#e6eef6',
-  },
-  ghostButtonText: {
-    color: '#0f172a',
-    fontWeight: '700',
   },
   actionsRow: {
     flexDirection: 'row',
